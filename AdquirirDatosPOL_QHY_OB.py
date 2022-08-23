@@ -9,8 +9,8 @@ from libqhy import *
 
 # qhyccd = CDLL('libqhyccd.so.6.0.4')
 # qhyccd = CDLL('pkg_win/x64/qhyccd.dll')#locaL
-# qhyccd = CDLL("qhyccd.dll")
-qhyccd = CDLL("C:/Program Files/QHYCCD/AllInOne/sdk/x64/qhyccd.dll")  # iNSTALADO
+qhyccd = CDLL("./qhyccd.dll")
+# qhyccd = CDLL("C:/Program Files/QHYCCD/AllInOne/sdk/x64/qhyccd.dll")  # iNSTALADO
 qhyccd.GetQHYCCDParam.restype = c_double
 qhyccd.OpenQHYCCD.restype = ctypes.POINTER(c_uint32)
 # ref: https://www.qhyccd.com/bbs/index.php?topic=6356.0
