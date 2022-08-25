@@ -1,2 +1,4 @@
 *.fits
 *.pyc
+*.pyo
+__pycache__/
