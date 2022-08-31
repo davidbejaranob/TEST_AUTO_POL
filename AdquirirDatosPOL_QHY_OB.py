@@ -6,6 +6,7 @@ import time
 import cv2 as cv
 from matplotlib import pyplot as plt
 from libqhy import *
+import os
 
 # qhyccd = CDLL('libqhyccd.so.6.0.4')
 # qhyccd = CDLL('pkg_win/x64/qhyccd.dll')#locaL
@@ -240,7 +241,7 @@ def zsc_sample(image, maxpix, bpmask=None, zmask=None):
 
 #####################################################################
 def zscale_samples(samples, contrast=0.25):
-    samples = np.asarray(samples, dtype=np.float)
+    samples = np.asarray(samples, dtype=np.float64)
     npix = len(samples)
     samples.sort()
     zmin = samples[0]
@@ -286,7 +287,7 @@ def zsc_fit_line(samples, npix, krej, ngrow, maxiter):
     last_ngoodpix = npix + 1
 
     # This is the mask used in k-sigma clipping.  0 is good, 1 is bad
-    badpix = np.zeros(npix, dtype=np.int)
+    badpix = np.zeros(npix, dtype=np.int64)
 
     #
     #  Iterate
@@ -328,7 +329,7 @@ def zsc_fit_line(samples, npix, krej, ngrow, maxiter):
         badpix[above] = BAD_PIXEL
 
         # Convolve with a kernel of length ngrow
-        kernel = np.ones(ngrow, dtype=np.int)
+        kernel = np.ones(ngrow, dtype=np.int64)
         badpix = np.convolve(badpix, kernel, mode="same")
 
         ngoodpix = len(np.where(badpix == GOOD_PIXEL)[0])
@@ -438,6 +439,29 @@ def mover_OB(serial, gra, axi="Y", di="+", speed=100, m=5):
     serial.run(z)
 
 
+def question(outar):
+    i = 0
+    while i < 2:
+        answer = input(
+            "\nEl Directorio "
+            + outar
+            + " ya existe. Quiere reescribir los datos (si/no)? : "
+        )
+        if any(answer.lower() == f for f in ["si", "s", "1"]):
+            return "si"
+            break
+        elif any(answer.lower() == f for f in ["no", "n", "0"]):
+            return "no"
+            break
+        else:
+            i += 1
+            if i < 2:
+                print("Please enter yes or no")
+            else:
+                print("Nothing done")
+                quit()
+
+
 ###############################################################################################################
 ##################################INICIA CODIGO##############################################################
 ###############################################################################################################
@@ -449,7 +473,20 @@ gan = 1
 et = 0.5
 h["GAIN"] = gan
 h["EXP-TIME"] = et
+
 pre_arch = input("Prefijo Archivo FITS: ")
+outar = "datos/" + pre_arch
+# Create target Directory if don't exist
+if not os.path.exists(outar):
+    os.makedirs(outar)
+    print("\nDirectorio", outar, "Creado\n")
+else:
+    create_dir = question(outar)
+    if create_dir == "no":
+        print("\nEjecución terminada\n")
+        quit()
+
+
 h["OBJECT"] = pre_arch
 gno_ini = 3.5
 sle_time = 7
@@ -457,10 +494,14 @@ gno_paso = 5
 mgno = 4.4903  # Grados por mm
 gno_tot = 90
 pol_paso = 45
+flat_pos = 180
+flats_num = 3
+et_flats = 5
+darks_num = 5
 mpol = 4.97  # grados por mm
 pol_tot = 135
 img = get_cam_array(cam, et=et, gan=gan)
-print("CLICK en el Centro de la imagen")
+print("CLICK en el Centro de la imagen\n")
 f = mou_click(img)
 oxy = np.array(f.xy)
 x0 = int(oxy[0, 0])
@@ -502,15 +543,104 @@ for k in range(int((gno_tot - gno_ini) / gno_paso) + 1):  # Mover Goniometro
         h["DATE-OBS"] = TT.isot
         h["NAME"] = "{:}_{:03}.fits".format(pre_arch, kk)
         ft.writeto(
-            "{:}_{:03}.fits".format(pre_arch, kk), imr, header=h, overwrite=True
+            "{:}_{:03}.fits".format(outar + "/" + pre_arch, kk),
+            imr,
+            header=h,
+            overwrite=True,
         )  # >Grabar imagen
         time.sleep(0.05)
         kk = kk + 1
 
-    z = "$J=G91G21Z-" + str((pol_tot - 1) / mpol) + "F300"
+    z = "$J=G91G21Z-" + str((pol_tot - 1) / mpol) + "F200"
     serial.run(z)  # para regresar a 0 ojo el -1 es por backlash
     time.sleep(sle_time)
-y = "$J=G91G21Y-" + str(((k) * gno_paso - 2) / mgno) + "F100"
+plt.close()
+
+input(colored.red("Coloque hoja blanca, presione enter cuando esté listo: "))
+print()
+y = "$J=G91G21Y" + str((flat_pos - ((k) * gno_paso + gno_ini)) / mgno) + "F100"
+gno_pos = flat_pos
+pol_tot = 180
+print("Muevo Goniometro: {:} grados".format(gno_pos))
+serial.run(y)  # para acomodar posiciones
+time.sleep(sle_time / 2)
+kk = 1
+for l in range(int(pol_tot / pol_paso) + 1):  # Rotar Polarizador
+    if l == 0:
+        z = "$J=G91G21Z" + str(0) + "F200"
+    else:
+        z = "$J=G91G21Z" + str(pol_paso / mpol) + "F200"
+    pol_pos = l * pol_paso
+    print("Muevo Polarizador: {:} grados".format(pol_pos))
+    serial.run(z)  # para acomodar posiciones
+    time.sleep(sle_time)
+    for j in range(flats_num):
+        # Capturar y desplegar imagen
+        # show_cam_img(cam)
+        img = get_cam_array(cam, et=et_flats, gan=gan)
+
+        TT = Time.now()
+        imr = corte_xy(img, x=x0, y=y0)
+        plt.figure(1)
+        plt.imshow(imr)
+        plt.gray()
+        plt.title("GNO: {:}, POL: {:}".format(gno_pos, pol_pos))
+        plt.draw()
+        plt.pause(1)
+        h["GNO"] = gno_pos
+        h["POL"] = pol_pos
+        h["JD"] = TT.jd  # Obtener el tiempo de adquisicion de la imagen
+        h["DATE-OBS"] = TT.isot
+        h["NAME"] = "{:}_{:03}.fits".format("flat", kk)
+        ft.writeto(
+            "{:}_{:}_{:03}.fits".format(outar + "/" + "flat", pre_arch, kk),
+            imr,
+            header=h,
+            overwrite=True,
+        )  # >Grabar imagen
+        time.sleep(0.05)
+        kk = kk + 1
+plt.close()
+z = "$J=G91G21Z-" + str((pol_tot - 1) / mpol) + "F200"
+serial.run(z)  # para regresar a 0 ojo el -1 es por backlash
+time.sleep(sle_time)
+input(colored.red("Retire la hoja blanca, presione enter cuando esté listo: "))
+print()
+y = "$J=G91G21Y-" + str((gno_pos - gno_ini - 2) / mgno) + "F100"
 serial.run(y)  # para regresar a 0 el -2 es por backlash
-time.sleep(sle_time * 2)
+time.sleep(sle_time * 4)
+
+input(
+    colored.red("Coloque la tapa sobre la cámara, presione enter cuando esté listo: ")
+)
+print()
+kk = 1
+for z in range(darks_num):
+    # Capturar y desplegar imagen
+    # show_cam_img(cam)
+    img = get_cam_array(cam, et=et, gan=gan)
+
+    TT = Time.now()
+    imr = corte_xy(img, x=x0, y=y0)
+    plt.figure(1)
+    plt.imshow(imr)
+    plt.gray()
+    plt.title("GNO: {:}, POL: {:}".format(gno_pos, pol_pos))
+    plt.draw()
+    plt.pause(1)
+    h["GNO"] = gno_pos
+    h["POL"] = pol_pos
+    h["JD"] = TT.jd  # Obtener el tiempo de adquisicion de la imagen
+    h["DATE-OBS"] = TT.isot
+    h["NAME"] = "{:}_{:03}.fits".format("dark", kk)
+
+    ft.writeto(
+        "{:}_{:}_{:03}.fits".format(outar + "/" + "dark", pre_arch, kk),
+        imr,
+        header=h,
+        overwrite=True,
+    )  # >Grabar imagen
+    time.sleep(0.05)
+    kk = kk + 1
+
 close_cam(cam)
