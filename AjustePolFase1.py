@@ -83,4 +83,4 @@ plt.legend()
 #invertir ejes
 #ax = plt.gca()
 #ax.set_ylim(ax.get_ylim()[::-1])
-plt.show(block=False)
+plt.show()
