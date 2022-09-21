@@ -1,9 +1,16 @@
+from importlib.resources import path
+from tabnanny import check
 import astropy.io.fits as ft
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.ndimage.interpolation as ipl
 import scipy.ndimage as nd
+import os
+import subprocess
+import glob
+from clint.textui import colored
+clear = lambda: os.system("cls")  # On Windows System
 
 
 #############################################################
@@ -108,7 +115,7 @@ def aper(img, coo, cr):
 
     # hace un shift para centrar el objeto en un pixel entero
     dyx = (int(coo[0]) - coo[0], int(coo[1]) - coo[1])
-    img1 = ipl.shift(img, dyx)
+    img1 = nd.shift(img, dyx)
 
     # seccion de la imagen con el objeto. Las coord. ingresadas
     # estan en el centro de la seccion
@@ -907,6 +914,24 @@ def anillo(img, coo, cri, cre, full=True):
     return val
 
 
+def txt_lists(path, arch):
+    # Get object frames list
+    fp = glob.glob(path + arch +"_???.fits")
+    with open(path + arch + ".txt", "w") as f:
+        for item in fp:
+            f.write("%s\n" % item)
+    # Get dark frames list
+    fp = glob.glob(path + "*dark" + "?"*(len(arch)+5) +".fits")
+    with open(path + "dark.txt", "w") as f:
+        for item in fp:
+            f.write("%s\n" % item)
+    # Get flat frames list
+    fp = glob.glob(path + "*flat" + "?"*(len(arch)+5) +".fits")
+    with open(path + "flat.txt", "w") as f:
+        for item in fp:
+            f.write("%s\n" % item)
+
+
 #########CODIGO DE PATY.........####################################################
 ###############################################################################
 ##############################main@#########################################
@@ -914,12 +939,21 @@ def anillo(img, coo, cri, cre, full=True):
 # refot.reducir('flats.dat','bias.dat','objetos.dat') #falta descomentar para otros archivos flats bias y objetos.
 
 #%%
-print(
-    "Ingresa el nombre de la lista con archivos .fits (incluyendo la extension del archivo):"
-)
-arch = input()
+
+clear()
+
+print("\nObjetos observados:\n")
+print(colored.yellow(subprocess.check_output(["dir", "datos\\"]).decode()))  # Cambiar
+
+arch = input("Ingresa el nombre de un objeto: ")
+
+cwd = os.getcwd().format()  # Get the current working directory
+path = cwd + "\datos\\" + arch + "\\" # Object data directory
+
+txt_lists(path, arch)
+
 obj = []
-with open(arch, "r") as f:
+with open(path + arch + ".txt", "r") as f:
     objetos = f.readlines()
     for linea in objetos:
         obj.append(linea.strip("\n"))
@@ -936,7 +970,7 @@ Flux = []
 Imnum = []
 for item in obj:
     if k == 1:  # Solo abrir imagen la primera vez
-        print(item)
+        print("\n" + item + "\n")
         im, hd = leefits(item)
         out = mou_clickN(im, N=n)
         x = out.xy[0][0]
@@ -991,5 +1025,10 @@ plt.plot(imagen, flujo, ".-")
 plt.xlabel("Numero de imagen")
 plt.ylabel("Flujo")
 plt.show()
-print("Grabando Datos: {:}".format("Fotom_" + arch[:-3] + "csv"))
-np.savetxt("Fotom_" + arch[:-3] + "csv", np.array([imagen, flujo]).T, delimiter=",")
+print(
+    colored.yellow("Grabando Datos: {:}".format(path + "Fotom_" + arch + ".csv\n"))
+)
+np.savetxt(
+    path + "Fotom_" + arch + ".csv", np.array([imagen, flujo]).T, delimiter=","
+)
+

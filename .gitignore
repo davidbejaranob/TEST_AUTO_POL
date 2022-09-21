@@ -4,3 +4,7 @@
 __pycache__/
 *.txt
 *.csv
+
+Fot_Rel_30jun22.py
+Row_sub_v01_ACR.ipynb
+lib/chzphot_v08.py
