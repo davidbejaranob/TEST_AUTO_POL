@@ -138,10 +138,10 @@ def get_cam_array(cam, et=0.5, gan=1):
     return x
 
 
-def init_openbuilds():
+def init_openbuilds(COM_NUMBER):
     # INICIALIZAR COMUNICACIÓN CON LA MESA LINEAL DE OPENBUILDS
     # OJO REVISAR EL PUERTO SERIAL EN EL SW DE OPENBUILDS
-    with Communicate("COM3", 115200, timeout=0.70, debug=0, quiet=0) as serial:
+    with Communicate(COM_NUMBER, 115200, timeout=0.70, debug=0, quiet=0) as serial:
         x = "$$"
         serial.run(x)
         x = "$X"
@@ -439,14 +439,10 @@ def mover_OB(serial, gra, axi="Y", di="+", speed=100, m=5):
     serial.run(z)
 
 
-def question(outar):
+def question(message):
     i = 0
     while i < 2:
-        answer = input(
-            "\nEl Directorio "
-            + outar
-            + " ya existe. Quiere reescribir los datos (si/no)? : "
-        )
+        answer = input(message)
         if any(answer.lower() == f for f in ["si", "s", "1"]):
             return "si"
             break
@@ -462,12 +458,68 @@ def question(outar):
                 quit()
 
 
+def gno_pos_180(message, image_type, image_count, exp_time):
+    input(colored.red(message))
+    print()
+    kk = 1
+    for l in range(int(pol_tot / pol_paso) + 1):  # Rotar Polarizador
+        if l == 0:
+            z = "$J=G91G21Z" + str(0) + "F200"
+        else:
+            z = "$J=G91G21Z" + str(pol_paso / mpol) + "F200"
+        pol_pos = l * pol_paso
+        print("Muevo Polarizador: {:} grados".format(pol_pos))
+        serial.run(z)  # para acomodar posiciones
+        time.sleep(sle_time)
+        for j in range(image_count):
+            # Capturar y desplegar imagen
+            # show_cam_img(cam)
+            img = get_cam_array(cam, et=exp_time, gan=gan)
+
+            TT = Time.now()
+            imr = corte_xy(img, x=x0, y=y0)
+            plt.figure(1)
+            plt.imshow(imr)
+            plt.gray()
+            plt.title("GNO: {:}, POL: {:}".format(gno_pos, pol_pos))
+            plt.draw()
+            plt.pause(1)
+            h["GNO"] = gno_pos
+            h["POL"] = pol_pos
+            h["JD"] = TT.jd  # Obtener el tiempo de adquisicion de la imagen
+            h["DATE-OBS"] = TT.isot
+            h["NAME"] = "{:}_{:03}.fits".format(image_type, kk)
+            ft.writeto(
+                "{:}_{:}_{:03}.fits".format(outar + "/" + image_type, pre_arch, kk),
+                imr,
+                header=h,
+                overwrite=True,
+            )  # >Grabar imagen
+            time.sleep(0.05)
+            kk = kk + 1
+    plt.close()
+    z = "$J=G91G21Z-" + str((pol_tot - 1) / mpol) + "F200"
+    serial.run(z)  # para regresar a 0 ojo el -1 es por backlash
+    time.sleep(sle_time)
+    input(colored.red("Retire el objeto que se encuentra delante de la cámara: "))
+    print()
+
+
 ###############################################################################################################
 ##################################INICIA CODIGO##############################################################
 ###############################################################################################################
 
 cam = init_cam()
-serial = init_openbuilds()
+
+COM_NUMBER = question(
+    "\nEl puerto serie de control de los motores por defecto es el COM3, desea cambiarlo? (si/no)? : "
+)
+# Create target Directory if don't exist
+if COM_NUMBER == "si":
+    COM_NUMBER = input("\nSeleccione el puerto que desea utilizar (COM#): ")
+else:
+    COM_NUMBER = "COM3"
+serial = init_openbuilds(COM_NUMBER)
 h = create_header()
 gan = 1
 et = 0.5
@@ -481,7 +533,11 @@ if not os.path.exists(outar):
     os.makedirs(outar)
     print("\nDirectorio", outar, "Creado\n")
 else:
-    create_dir = question(outar)
+    create_dir = question(
+        "\nEl Directorio "
+        + outar
+        + " ya existe. Quiere reescribir los datos (si/no)? : "
+    )
     if create_dir == "no":
         print("\nEjecución terminada\n")
         quit()
@@ -496,12 +552,17 @@ gno_tot = 90
 pol_paso = 45
 flat_pos = 180
 flats_num = 3
-et_flats = 5
+high_pol_num = 3  # Valor arbitrario, cambiar de ser necesario
+low_pol_num = 3  # Valor arbitrario, cambiar de ser necesario
 darks_num = 5
+et_flats = 0.5
+et_high = 0.5  # Valor arbitrario, cambiar de ser necesario
+et_low = 0.5  # Valor arbitrario, cambiar de ser necesario
 mpol = 4.97  # grados por mm
 pol_tot = 135
+input("Asegurese de que retirar la tapa de la cámara: ")
 img = get_cam_array(cam, et=et, gan=gan)
-print("CLICK en el Centro de la imagen\n")
+print("\nCLICK en el Centro de la imagen\n")
 f = mou_click(img)
 oxy = np.array(f.xy)
 x0 = int(oxy[0, 0])
@@ -556,56 +617,30 @@ for k in range(int((gno_tot - gno_ini) / gno_paso) + 1):  # Mover Goniometro
     time.sleep(sle_time)
 plt.close()
 
-input(colored.red("Coloque hoja blanca, presione enter cuando esté listo: "))
-print()
 y = "$J=G91G21Y" + str((flat_pos - ((k) * gno_paso + gno_ini)) / mgno) + "F100"
 gno_pos = flat_pos
 pol_tot = 180
 print("Muevo Goniometro: {:} grados".format(gno_pos))
 serial.run(y)  # para acomodar posiciones
 time.sleep(sle_time / 2)
-kk = 1
-for l in range(int(pol_tot / pol_paso) + 1):  # Rotar Polarizador
-    if l == 0:
-        z = "$J=G91G21Z" + str(0) + "F200"
-    else:
-        z = "$J=G91G21Z" + str(pol_paso / mpol) + "F200"
-    pol_pos = l * pol_paso
-    print("Muevo Polarizador: {:} grados".format(pol_pos))
-    serial.run(z)  # para acomodar posiciones
-    time.sleep(sle_time)
-    for j in range(flats_num):
-        # Capturar y desplegar imagen
-        # show_cam_img(cam)
-        img = get_cam_array(cam, et=et_flats, gan=gan)
-
-        TT = Time.now()
-        imr = corte_xy(img, x=x0, y=y0)
-        plt.figure(1)
-        plt.imshow(imr)
-        plt.gray()
-        plt.title("GNO: {:}, POL: {:}".format(gno_pos, pol_pos))
-        plt.draw()
-        plt.pause(1)
-        h["GNO"] = gno_pos
-        h["POL"] = pol_pos
-        h["JD"] = TT.jd  # Obtener el tiempo de adquisicion de la imagen
-        h["DATE-OBS"] = TT.isot
-        h["NAME"] = "{:}_{:03}.fits".format("flat", kk)
-        ft.writeto(
-            "{:}_{:}_{:03}.fits".format(outar + "/" + "flat", pre_arch, kk),
-            imr,
-            header=h,
-            overwrite=True,
-        )  # >Grabar imagen
-        time.sleep(0.05)
-        kk = kk + 1
-plt.close()
-z = "$J=G91G21Z-" + str((pol_tot - 1) / mpol) + "F200"
-serial.run(z)  # para regresar a 0 ojo el -1 es por backlash
-time.sleep(sle_time)
-input(colored.red("Retire la hoja blanca, presione enter cuando esté listo: "))
-print()
+gno_pos_180(
+    "Coloque la hoja tomar campos planos, presione enter cuando esté listo: ",
+    "flat",
+    flats_num,
+    et_flats,
+)
+gno_pos_180(
+    "Coloque la hoja de la estrella de alta polarización, presione enter cuando esté listo: ",
+    "high",
+    high_pol_num,
+    et_high,
+)
+gno_pos_180(
+    "Coloque la hoja de la estrella de baja polarización, presione enter cuando esté listo: ",
+    "low",
+    low_pol_num,
+    et_low,
+)
 y = "$J=G91G21Y-" + str((gno_pos - gno_ini - 2) / mgno) + "F100"
 serial.run(y)  # para regresar a 0 el -2 es por backlash
 time.sleep(sle_time * 4)
