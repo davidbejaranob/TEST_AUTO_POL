@@ -386,7 +386,7 @@ def rebin(arr, new_shape):
 
 
 ###################################################################
-def corte_xy(img, x, y, boxG=140, bi=(2, 2)):
+def corte_xy(img, x, y, boxG=200, bi=(2, 2)):
     """Funcion para recortar y salvar imagen procesada
     img-->corregida por flat y bias ya es NUMPY array
     boxG--> tam de la caja a guardar
