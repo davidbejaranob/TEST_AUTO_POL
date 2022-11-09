@@ -920,17 +920,17 @@ def anillo(img, coo, cri, cre, full=True):
 
 def txt_lists(path, arch):
     # Get object frames list
-    fp = glob.glob(path + arch +"_???.fits")
+    fp = glob.glob(path + arch +"_0??.fits")
     with open(path + arch + ".txt", "w") as f:
         for item in fp:
             f.write("%s\n" % item)
     # Get dark frames list
-    fp = glob.glob(path + "*dark" + "?"*(len(arch)+5) +".fits")
+    fp = glob.glob(path + "*dark" + "?"*(len(arch)+5) +"_0??.fits")
     with open(path + "dark.txt", "w") as f:
         for item in fp:
             f.write("%s\n" % item)
     # Get flat frames list
-    fp = glob.glob(path + "*flat" + "?"*(len(arch)+5) +".fits")
+    fp = glob.glob(path + "*flat" + "?"*(len(arch)+5) +"_0??.fits")
     with open(path + "flat.txt", "w") as f:
         for item in fp:
             f.write("%s\n" % item)
@@ -1013,9 +1013,9 @@ def P_fit(alpha,magPr):
    magVr--> observed Pr'''
    X=(alpha,alpha)
    model = Model(modelFase)
-   model.set_param_hint('c1', value=0.1,min=0,max=15)
-   model.set_param_hint('c2',value=0.1,min=0,max=15)
-   model.set_param_hint('c3',value=0.1,min=0,max=15)
+   model.set_param_hint('c1', value=2.5,min=0,max=25)
+   model.set_param_hint('c2',value=5,min=0,max=35)
+   model.set_param_hint('c3',value=.1,min=0,max=3)
    
    params = model.make_params()
    # Fitting
@@ -1024,21 +1024,245 @@ def P_fit(alpha,magPr):
 
    return model_fit
 
-#%% Main
 
+#-----------------------------------------------------
+
+def MAD(im):
+    '''Returns the Median and Median Absolute Deviation of an array.'''
+    
+    m = np.median(im)
+    dif = np.abs(im - m)
+    s = np.median(dif)
+
+    return(m, s)
+
+#-----------------------------------------------------
+
+def robomad(im, thresh=3):
+    '''Assumes that the array im has normally distributed background pixels
+    and some sources, like stars bad pixels and cosmic rays. Thresh = no. of sigma
+    for rejection (e.g., 5).'''
+    
+    #STEP 1: Start by getting the median and MAD as robust proxies for the mean and sd.
+    m,s = MAD(im)
+    sd = 1.4826 * s
+    
+    if (sd < 1.0e-14):
+        return(m,sd)
+    else:
+    
+        #STEP 2: Identify outliers, recompute mean and std with pixels that remain.
+        gdPix = np.where(abs(im - m) < (thresh*sd))
+        m1 = np.mean(im[gdPix])
+        sd1 = np.std(im[gdPix])
+		
+        #STEP 3: Repeat step 2 with new mean and sdev values.
+        gdPix = np.where(abs(im - m1) < (thresh*sd1))
+        m2 = np.mean(im[gdPix])
+        sd2 = np.std(im[gdPix])
+		
+        return(m2, sd2)
+    
+#-----------------------------------------------------
+
+def reducir(flats,bias,objetos):
+	"""
+	## La funcion reducir utiliza la misma rutina que estaba en el programa redbasica de RGH 
+	-- una vez ejecutado %run redbasica la forma de uso es:
+	:  reducir(lflats,lbias,lobjs)... donde los argumentos
+	son listas generadas con glob.glob
+	--> COmo resultado guardará los archivos procesados en el directorio de trabajo
+	Con el nombre original en OBJETOS.dat,  se espera que la lista de archivos tenga 
+	el sig formato: ../../../15_Eunomia_B_0008o.fits
+	"""
+	# armo lista de todas las imagenes a procesar
+
+	#lista=glob.glob("*.fits")
+	#if(len(lista)==0):
+	#  lista=glob.glob("*.FIT")
+
+	# armo listas para bias, flats y objetos
+	#archf=open(flats,'r')
+	#archb=open(bias,'r')
+	#archo=open(objetos,'r')	
+	
+	listb=bias#archb.readlines()
+	lf=flats#archf.readlines()
+	listo=objetos#archo.readlines()
+	listf=[]
+	#Extraer solo los flats en 0 y 90 grados
+	for ii in lf:
+        
+		if ft.getval(ii[:],'pol')==0:
+			listf.append(ii)
+		#
+		elif ft.getval(ii[:],'pol')==180:
+			listf.append(ii)
+ 
+
+	#for ii in lista:
+	#   if ft.getval(ii,'imagetyp')=='zero':
+	#       listb.append(ii)
+	#    elif ft.getval(ii,'imagetyp')=='flat':
+	#        listf.append(ii)
+	#    else:
+	#        listo.append(ii)
+
+	flg=(len(listb) != 0)
+	assert flg,"No hay imagenes de Darks"
+	flg=(len(listf) != 0)
+	assert flg,"No hay imagenes de FLAT"
+
+	print('Listas procesadas')
+
+	# arma un cubo con los bias
+	#
+	cubo=np.zeros((ft.getval(listb[0][:],'naxis2'),ft.getval(listb[0][:],'naxis1'),len(listb)),dtype=float)
+	for ii in range(len(listb)):
+		img,hdr=leefits(listb[ii][:],uint=True)
+		cubo[:,:,ii]=img
+	
+	# ordena pixel a pixel de menor a mayor
+	#
+	cubo1=np.sort(cubo,axis=2)
+
+	# calcula el valor medio despreciando el valor mas alto 
+	#
+	bias=np.mean(cubo1[:,:,:len(listb)-1],axis=2)
+	hdr.add_comment('Combinacion de {:d} BIAS con Python'.format(len(listb)))
+	ft.writeto('master_bias.fit',bias,header=hdr,overwrite=True)
+	print('BIAS listo')
+	
+	# arma un cubo con los flats
+	#
+	cubo=np.zeros((ft.getval(listf[0][:],'naxis2'),ft.getval(listf[0][:],'naxis1'),len(listf)),dtype=float)
+	# nchar es el num de caracteres previos al nombre en las listas de archivos
+	nchar=0	
+	for ii in range(len(listf)):
+		img,hdr=leefits(listf[ii][:],uint=True)
+	
+		# corrige flats por bias
+		#
+		img=img-bias
+		cubo[:,:,ii]=img
+		hdr.add_comment('Corregido por BIAS con Python')
+	
+	    #ft.writeto(listf[ii][nchar:-2],img,header=hdr,overwrite=True) #OJO CANCELADO PARA EVITAR DEMASIADOS ARCHIVOS
+       
+	print('Correccion de FLATS por BIAS. OK')
+ 
+	# ordena pixel a pixel de menor a mayor
+	#   
+	cubo1=np.sort(cubo,axis=2)
+
+	# calcula el valor medio despreciando el valor mas alto 
+	#
+	flat=np.mean(cubo1[:,:,:len(listf)-1],axis=2)
+	dim=np.shape(flat)
+	
+	# calcula un valor medio para el flat resultante
+	# considerando solo la zona central
+	#
+	fm=np.mean(flat[dim[0]//2-100:dim[0]//2+100,dim[1]//2-100:dim[1]//2+100])
+	hdr.add_comment('Combinacion de {:d} FLATS con Python'.format(len(listf)))
+	hdr.add_comment('Valor medio del FLAT: {:.2f}'.format(fm))
+	ft.writeto('master_flat.fit',flat,header=hdr,overwrite=True)
+	print('FLAT listo')
+
+	# renormaliza el flat con el valor medio
+	#
+	flatv=flat/fm
+	
+	# detecta valores igual a cero para evitar NaNs
+	#
+	inx=np.where(flatv == 0.)
+	if(len(inx) != 0):
+		flatv[inx]=0.1
+	
+	# procesa imagenes de objetos
+	print("entra for listo")	
+	for ii in range(len(listo)):
+		#print(listo[ii])
+		img,hdr=leefits(listo[ii],uint=True);#print(ii)
+	
+	# corrige por bias y flat
+	#
+		img=(img-bias)/flatv
+		hdr.add_comment('Corregido por DARKS con Python')
+		hdr.add_comment('Corregido por FLAT con Python')
+		hdr.add_comment('Valor medio del FLAT: {:.2f}'.format(fm))
+		#Escribe archivos con extension FIT no FITS
+		ft.writeto(listo[ii][nchar:-1],img,header=hdr,overwrite=True)
+	        
+	print('Correccion de OBJETOS por FLAT y BIAS. OK')
+	return listo[0][0:5],hdr['OBJECT']
+#----------------------------------------------------------------------
+############################################################
+####################### Main*************************************************
+#########################################################
 clear()
 
 print("\nObjetos observados:\n")
-print(colored.yellow(subprocess.check_output(["dir", "datos\\"]).decode()))  # Cambiar
+#para Windows
+print(colored.yellow(subprocess.check_output(["powershell.exe","dir datos\\"]).decode()))  # Cambiar
+#para linux
+#kk=glob.glob("datos/*")
+#print(kk)
+#print(colored.yellow(subprocess.check_output(["termit","ls datos\\"]).decode()))  # Cambiar
 
 arch = input("Ingresa el nombre de un objeto: ")
 
 cwd = os.getcwd().format()  # Get the current working directory
-path = cwd + "\datos\\" + arch + "\\" # Object data directory
+path = cwd + "/datos/" + arch + "/" # Object data directory linux
 
-txt_lists(path, arch)
+##############################################################
+#Limpiar imagenes de variaciones aleatorias en lectura CMOS
+##############################################################
+lst=glob.glob(path+'*_s.fits')
+if len(lst)<1: #Si no hay archivos Scrubbed
+	print("Limpiando imagenes por ruido CMOS...")
+	rawlist=glob.glob(path+'*.fits')
+
+	for frame in rawlist: #nf subtract out row wise medians in each frame and save in new directory "save path"
+	    d,h = leefits(frame)
+	    xS = h['NAXIS1']
+	    yS = h['NAXIS2']
+	    #Restar DARKS Al parecer no sirve de nada, el ruido aleatorio varía mucho
+	    #d=d-MDark
+	    rowmeds = np.median(d, axis = 1)
+	    d_scrubbed = d - np.outer(rowmeds,np.ones((xS)))
+	    
+	    mn, std = robomad(d_scrubbed) #get MAD
+	    
+	    d_scrubbed_bkg = np.float32(d_scrubbed - mn) #remove MAD from BKG
+	    
+	    #d_scrubbed_bkg[:10,:] = mn # replace hot pixels at top with MAD
+	        
+	    ft.writeto(frame[:-5]+ '_s' + '.fits', d_scrubbed_bkg, header = h, overwrite=True) #save scrubbed image
+else:
+	print("Brincando proceso de limpiado por ruido CMOS...")
+
+################################################################
+#################Procesar por por DARKS y FLATS#################
+#################################################################
+
+objlst=glob.glob(path+arch+'*_s.fits')
+fltlst=glob.glob(path+'flat*_s.fits')
+drklst=glob.glob(path+'dark*_s.fits')
+lst=glob.glob(path+'*_s.fit')
+if len(lst)<1: #Si no hay archivos Corregidos
+   print("Corrigiendo imagenes por DARKS y Flats...")
+   _,_=reducir(fltlst,drklst,objlst)
+else:
+   print("Brincando coprreccion de DARKS y FLATS")
+objlst=glob.glob(path+arch+'*_0??.fits')#Usar datos no corregidos
+fltlst=glob.glob(path+'flat*_0??.fits')
+drklst=glob.glob(path+'dark*_0??.fits')
+#Comienza reduccion de David
+txt_lists(path, arch) #Cambiar esta funcion para agregar correcciones 
 
 obj = []
+print("Ojo: Trabajando con objetos no corregidos...")
 with open(path + arch + ".txt", "r") as f:
     objetos = f.readlines()
     for linea in objetos:
@@ -1049,11 +1273,179 @@ with open(path + arch + ".txt", "r") as f:
 n = 1  # numero de objetos
 k = 1  # contador de imagenes
 box = 30  # caja para buscar centroide
-rr = (5, 10, 15, 20)  # Aperturas para fotometria
-ri = 25  # Radio interno anillo de cielo
-re = 30  # Radio externo del anillo de cielo
+rr = (5, 10, 15, 20, 25)  # Aperturas para fotometria
+ri = 26  # Radio interno anillo de cielo
+re = 28  # Radio externo del anillo de cielo
+
+
+#Fotometeria de baja
+n = 1  # numero de objetos
+k = 1  # contador de imagenes
 Flux = []
 Imnum = []
+
+lowlst=glob.glob(path+'low*_0??.fits')
+lowlst.sort()
+ba=0
+Lows=[]
+for kk in lowlst:
+    _,hd=leefits(kk)
+    if hd['pol']==0 and ba==0:
+        Lows.append(kk)
+        ba=ba+1
+    if hd['pol']==45 and ba==1:
+        Lows.append(kk)
+        ba=ba+1
+    if hd['pol']==90 and ba==2:
+        Lows.append(kk)
+        ba=ba+1
+    if hd['pol']==135 and ba==3:
+        Lows.append(kk)
+        ba=ba+1
+for item in Lows:
+    if k == 1:  # Solo abrir imagen la primera vez
+        print("\n" + item + "\n")
+        im, hd = leefits(item)
+        out = mou_clickN(im, N=n)
+        x = out.xy[0][0]
+        y = out.xy[0][1]
+        yx = centro(im, (y, x), box=box)
+        # print("Centroide: ({:.2},{:.2})".format(yx[0][0],yx[0][1]))
+        val, sky = fot(
+            img=im, obj=1, coo=yx[0], rr=rr, ri=ri, re=re, tint=hd["EXP-TIME"]
+        )
+        R = []  # genera una nueva lista con los ultimos elementos
+        for i in range(len(val)):
+            R.append(val[i][5])  # Buscando el error minimo en la fotometria
+        mvalor = min(R)  # val[R.index(min(R))]
+        area = val[R.index(min(R))][2]
+        flux = val[R.index(min(R))][3]
+        fondo = sky[2] * area
+        Flux.append(flux)  # -fondo)
+        Imnum.append(k)
+        print(
+            "Centroide: ({:.2},{:.2})-->  Error en Fotometria: {:.2}".format(
+                yx[0][0], yx[0][1], mvalor
+            )
+        )
+        # print("Error en Fotometria: {:}".format(mvalor))
+        k = k + 1
+    else:
+        print(item)
+        im, hd = leefits(item)
+        yx = centro(im, (yx[0]), box=box)
+        val, sky = fot(
+            img=im, obj=1, coo=yx[0], rr=rr, ri=ri, re=re, tint=hd["EXP-TIME"]
+        )
+        R = []  # genera una nueva lista con los ultimos elementos
+        for i in range(len(val)):
+            R.append(val[i][5])  # Buscando el error minimo en la fotometria
+        mvalor = min(R)  # val[R.index(min(R))]
+        area = val[R.index(min(R))][2]
+        flux = val[R.index(min(R))][3]
+        fondo = sky[2] * area
+        Flux.append(flux)  # -fondo)
+        Imnum.append(k)
+        k = k + 1
+        print("Centroide: ({:})-->  Error en Fotometria: {:}".format(yx[0], mvalor))
+        # print("Error en Fotometria: {:}".format(mvalor))
+
+flujo = np.array(Flux)
+imagen = np.array(Imnum)
+
+print(
+    colored.yellow("Grabando Datos: {:}".format(path + "lowFotom_" + arch + ".csv\n"))
+)
+np.savetxt(
+    path + "lowFotom_" + arch + ".csv", np.array([imagen, flujo]).T, delimiter=",")   
+
+#Fotometria de alta
+n = 1  # numero de objetos
+k = 1  # contador de imagenes
+Flux = []
+Imnum = []
+
+higlst=glob.glob(path+'hig*_0??.fits')
+higlst.sort()
+ba=0
+Highs=[]
+for kk in higlst:
+    _,hd=leefits(kk)
+    if hd['pol']==0 and ba==0:
+        Highs.append(kk)
+        ba=ba+1
+    if hd['pol']==45 and ba==1:
+        Highs.append(kk)
+        ba=ba+1
+    if hd['pol']==90 and ba==2:
+        Highs.append(kk)
+        ba=ba+1
+    if hd['pol']==135 and ba==3:
+        Highs.append(kk)
+        ba=ba+1
+for item in Highs:
+    if k == 1:  # Solo abrir imagen la primera vez
+        print("\n" + item + "\n")
+        im, hd = leefits(item)
+        out = mou_clickN(im, N=n)
+        x = out.xy[0][0]
+        y = out.xy[0][1]
+        yx = centro(im, (y, x), box=box)
+        # print("Centroide: ({:.2},{:.2})".format(yx[0][0],yx[0][1]))
+        val, sky = fot(
+            img=im, obj=1, coo=yx[0], rr=rr, ri=ri, re=re, tint=hd["EXP-TIME"]
+        )
+        R = []  # genera una nueva lista con los ultimos elementos
+        for i in range(len(val)):
+            R.append(val[i][5])  # Buscando el error minimo en la fotometria
+        mvalor = min(R)  # val[R.index(min(R))]
+        area = val[R.index(min(R))][2]
+        flux = val[R.index(min(R))][3]
+        fondo = sky[2] * area
+        Flux.append(flux)  # -fondo)
+        Imnum.append(k)
+        print(
+            "Centroide: ({:.2},{:.2})-->  Error en Fotometria: {:.2}".format(
+                yx[0][0], yx[0][1], mvalor
+            )
+        )
+        # print("Error en Fotometria: {:}".format(mvalor))
+        k = k + 1
+    else:
+        print(item)
+        im, hd = leefits(item)
+        yx = centro(im, (yx[0]), box=box)
+        val, sky = fot(
+            img=im, obj=1, coo=yx[0], rr=rr, ri=ri, re=re, tint=hd["EXP-TIME"]
+        )
+        R = []  # genera una nueva lista con los ultimos elementos
+        for i in range(len(val)):
+            R.append(val[i][5])  # Buscando el error minimo en la fotometria
+        mvalor = min(R)  # val[R.index(min(R))]
+        area = val[R.index(min(R))][2]
+        flux = val[R.index(min(R))][3]
+        fondo = sky[2] * area
+        Flux.append(flux)  # -fondo)
+        Imnum.append(k)
+        k = k + 1
+        print("Centroide: ({:})-->  Error en Fotometria: {:}".format(yx[0], mvalor))
+        # print("Error en Fotometria: {:}".format(mvalor))
+
+flujo = np.array(Flux)
+imagen = np.array(Imnum)
+
+print(
+    colored.yellow("Grabando Datos: {:}".format(path + "higFotom_" + arch + ".csv\n"))
+)
+np.savetxt(
+    path + "higFotom_" + arch + ".csv", np.array([imagen, flujo]).T, delimiter=",")  
+
+#Fotometria de objetos
+n = 1  # numero de objetos
+k = 1  # contador de imagenes
+Flux = []
+Imnum = []
+obj.sort() #ordenar lista...
 for item in obj:
     if k == 1:  # Solo abrir imagen la primera vez
         print("\n" + item + "\n")
@@ -1118,17 +1510,35 @@ np.savetxt(
     path + "Fotom_" + arch + ".csv", np.array([imagen, flujo]).T, delimiter=","
 )
 
-
+####################
 # pol_Lab.py
+######################
+arch1="Fotom_" + arch + ".csv"
+datL=np.loadtxt(path+'low'+arch1,delimiter=',') #datos en formato numpy
+datH=np.loadtxt(path+'hig'+arch1,delimiter=',') #datos en formato numpy
+l0=datL[0,1];l45=datL[1,1];l90=datL[2,1];l135=datL[3,1]
+h0=datH[0,1];h45=datH[1,1];h90=datH[2,1];h135=datH[3,1]
+#Pol Baja
+ql=((l0-l90)/(l0+l90))
+ul=((l45-l135)/(l45+l135))
+Pl=np.sqrt(ql**2+ul**2) #porcentaje de pol
+Al=((np.arctan2(ul,ql))*180/np.pi)/2 #angulo entre 0 y 180
+#Pol Alta
+qh=((h0-h90)/(h0+h90));qh=qh-ql#restando lo instrumental
+uh=((h45-h135)/(h45+h135));uh=uh-ul
+Ph=np.sqrt(qh**2+uh**2) #porcentaje de pol
+Ah=((np.arctan2(uh,qh))*180/np.pi)/2 #angulo entre 0 y 180
+#ojo hay que calcular el offset, se supone que el eje de transmision es 90 
+offA=90-Ah
 
-arch="Fotom_" + arch + ".csv"
 faseIn=input("Angulo de fase inicial: ")
 faseIn=float(faseIn)
 paso=input("Paso en angulo de fase: ")
 paso=float(paso)
-dat1=np.loadtxt(path+arch,delimiter=',') #datos en formato numpy
+dat1=np.loadtxt(path+arch1,delimiter=',') #datos en formato numpy
 dat=dat1[:,1]
 PolR=[]
+
 
 ln=len(dat)  
 k=0
@@ -1137,38 +1547,26 @@ while k<ln:
 	x45=dat[k];k=k+1
 	x90=dat[k];k=k+1
 	x135=dat[k];k=k+1
-	q=((x0-x90)/(x0+x90))
-	u=((x45-x135)/(x45+x135))
+	q=((x0-x90)/(x0+x90))-ql#Restando lo instrumental
+	u=((x45-x135)/(x45+x135))-ul
 	P=np.sqrt(q**2+u**2) #porcentaje de pol
-	A=((np.arctan2(u,q))*180/np.pi)/2 #angulo entre 0 y 180
+	A=((np.arctan2(u,q))*180/np.pi)/2 + offA #angulo entre 0 y 180
 	if A < 0: A=A+180. #NO SE REQUIERE AL CALCULAR LA BAJA
 	if A >= 180: A=A-180.
-	'''####FALTA CALCULAR EL ERR DE POL...
-	n2=(x0+x90)**2
-	eq=np.sqrt((((x0/n2)**2)*ex90**2+((x90/n2)**2)*ex0**2))
-	#eq=np.sqrt(eq**2+sqs**2)*100#calculo del nuevo error q
-	n2=(x45+x135)**2
-	eu=np.sqrt((((x45/n2)**2)*ex135**2+((x135/n2)**2)*ex45**2))
-	#eu=np.sqrt(eu**2+sus**2)*100#calculo del nuevo error u
-	eP=np.sqrt(eq**2+eu**2) # Error de pol'''
-	#Calculo de error del angulo
-	r=u/q
-	'''sigma_r=np.abs(r)*np.sqrt((eq/q)**2+(eu/u)**2)
-	eA =0.5*sigma_r/(1.0+r*r)      
-	eA *= 180.0/np.pi'''
+	
 	#Calcular Pr y Th 
-	su=90
+	su=0
 	Pr,Th=polr(A,su,P)
 	PolR.append(Pr)
 
-pr=np.array(PolR)
+pr=np.array(PolR)*100 #porcentaje
 fas=np.arange(faseIn,len(pr)*paso+faseIn,paso)
 np.savetxt(path+'PolFase_'+arch,np.array([fas,pr]).T,delimiter=',')
 print("Guardando archivo: "+path+'PolFase_'+arch)
 print(np.array([fas,pr]).T)
 plt.figure();plt.clf()
 plt.plot(fas,pr,'.-')
-plt.xlabel(r'Phase Angle [$\alpha$]');plt.ylabel(r'Pr($\alpha$)' )
+plt.xlabel(r'Phase Angle [$\alpha$]');plt.ylabel(r'Pr($\alpha$) [%]' )
 plt.title('PolFase  '+arch)
 plt.show()
 
@@ -1192,7 +1590,7 @@ funF=interp1d(al,va,kind='linear')
 al0=np.arange(al[0],al[-1],.1)
 Mag0=funF(al0)
 LC_fit=P_fit(al0,Mag0)
-al1=np.arange(0,35,.1)
+al1=np.arange(0,80,.1)
 Fit=LC_fit.eval(X=(al,al0))
 #print parameters
 print(arch+':');print(LC_fit.params);print(':\n')
@@ -1204,8 +1602,8 @@ mod=modelFase(al1,c1,c2,c3)
 plt.plot(al1,mod,'--',label='Model')
 plt.plot(al,va,'*',label=arch)
 plt.plot(al0,Mag0,'-.',label='interp')
-plt.ylim(-1,1)
-plt.xlim(0,35)
+#plt.ylim(-6,5)
+#plt.xlim(0,70)
 #plt.plot(Y/v,F0,'-k',label='Synthetic_optimize')
 plt.xlabel(r'Phase Angle [$\alpha$]');plt.ylabel(r'Pr($\alpha$)' )
 plt.legend()
