@@ -1546,7 +1546,7 @@ while k<ln:
     x0=dat[k];k=k+1
     x45=dat[k];k=k+1
     x90=dat[k];k=k+1
-    x135=dat[k];k=k+1
+    x135=dat[k];k=k+1 # Por qué me marca error en esta linea?*****************************************
     q=((x0-x90)/(x0+x90))-ql#Restando lo instrumental
     u=((x45-x135)/(x45+x135))-ul
     P=np.sqrt(q**2+u**2) #porcentaje de pol

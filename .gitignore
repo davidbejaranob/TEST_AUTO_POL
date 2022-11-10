@@ -2,11 +2,13 @@
 *.fit
 *.pyc
 *.pyo
-datos/
-__pycache__/
 *.txt
 *.csv
+.vscode/
+datos/
+__pycache__/
 
+# Temporal hasta que termine de editar estos archivos
 Fot_Rel_30jun22.py
 Row_sub_v01_ACR.ipynb
 lib/chzphot_v08.py
