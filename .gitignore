@@ -1,6 +1,8 @@
 *.fits
+*.fit
 *.pyc
 *.pyo
+datos/
 __pycache__/
 *.txt
 *.csv
