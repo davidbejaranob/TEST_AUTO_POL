@@ -617,6 +617,12 @@ for k in range(int((gno_tot - gno_ini) / gno_paso) + 1):  # Mover Goniometro
     time.sleep(sle_time)
 plt.close()
 
+input(
+    colored.green(string)(
+        "Retirar el objeto que se encuentra delante de la cámara, presione enter cuando esté listo: "
+    )
+)
+
 y = "$J=G91G21Y" + str((flat_pos - ((k) * gno_paso + gno_ini)) / mgno) + "F100"
 gno_pos = flat_pos
 pol_tot = 180
