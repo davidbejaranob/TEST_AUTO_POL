@@ -1244,20 +1244,13 @@ def question(message):
 # ----------------------------------------------------------------------
 
 OS = question(
-    "\nDesde qué Sistema Operativo ejecutas este programa? (1) Windows (2) Linux/MacOs : "
+    "\nDesde qué Sistema Operativo ejecutas este programa? (1) Windows (2) Linux/MacOS : "
 )
 if OS == "1":
     clear = lambda: os.system("cls")
     clear()
     print("\nObjetos observados:\n")
-    print(
-        colored.yellow(subprocess.check_output(["dir", "datos\\"]).decode())
-    )  # Cambiar
-    print(
-        colored.yellow(
-            subprocess.check_output(["powershell.exe", "dir datos\\"]).decode()
-        )
-    )  # Cambiar
+    print(colored.yellow(subprocess.check_output(["dir", "datos\\"]).decode()))
 else:
     clear = lambda: os.system("clear")
     clear()
@@ -1269,7 +1262,7 @@ else:
                     f.name
                     for f in os.scandir(os.getcwd().format() + "/datos")
                     if f.is_dir()
-                ]  # MacOs
+                ]  # MacOS
             )
         )
         + "\n"
