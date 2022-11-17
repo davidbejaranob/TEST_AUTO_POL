@@ -13,9 +13,6 @@ from clint.textui import colored
 from lmfit.model import Model, save_model
 from scipy.interpolate import interp1d
 from scipy.stats import chisquare
-#import time
-clear = lambda: os.system("cls")  # On Windows System
-
 
 #############################################################
 #
@@ -352,22 +349,22 @@ def fot(
     -------
 
     val     : lista donde cada elemento es un vector que contiene:
-                0)	la identificacion del objeto,
-                1) el radio de la apertura,
-                2) el area total,
-                3) el flujo neto,
-                4) la magnitud,
-                5) su error
-                6) y la relacion S/N.
-        [todos float menos el nro. de identificacion que es int]
+                            0)	la identificacion del objeto,
+                            1) el radio de la apertura,
+                            2) el area total,
+                            3) el flujo neto,
+                            4) la magnitud,
+                            5) su error
+                            6) y la relacion S/N.
+            [todos float menos el nro. de identificacion que es int]
 
     sky     : vector que contiene:
-                0) el area del anillo donde se estimo el cielo,
-                1) el flujo total,
-                2) el valor del flujo de cielo por pixel,
-                3)y los radios interno
-                4) y externo utilizados para el anillo.
-        Si se utilizo un valor constante para el cielo ambos radios son cero. [float]
+                            0) el area del anillo donde se estimo el cielo,
+                            1) el flujo total,
+                            2) el valor del flujo de cielo por pixel,
+                            3)y los radios interno
+                            4) y externo utilizados para el anillo.
+            Si se utilizo un valor constante para el cielo ambos radios son cero. [float]
 
 
     Notes
@@ -444,8 +441,8 @@ class mou_clickN:
     def __init__(self, img, Zsc=True, N=3):
         """img--> matriz de datos de la imagen
         Zsc--> bandera para mejorar contraste tipo ZSCALE como DS9
-             N--> Numero de Clicks en la imagen antes de cerrar
-             OUT-->coords, pares de numeros que representan la coordenada extraida"""
+                 N--> Numero de Clicks en la imagen antes de cerrar
+                 OUT-->coords, pares de numeros que representan la coordenada extraida"""
         # Simple mouse click function to store coordinates
         def onclickN(event):
             global ix, iy
@@ -789,41 +786,41 @@ def zsc_compute_sigma(flat, badpix, npix):
 #
 def anillo(img, coo, cri, cre, full=True):
     """
-            Calcula el numero total de ADUs en una apertura anular, su valor medio, la mediana, la desviacion standard asumiendo una distribucion de Poisson, y el numero de pixels. Solo se
+                    Calcula el numero total de ADUs en una apertura anular, su valor medio, la mediana, la desviacion standard asumiendo una distribucion de Poisson, y el numero de pixels. Solo se
     consideran pixels enteros que se encuentren completamente dentro del anillo ya que lo que se pretende es obtener un valor representativo del brillo por pixel.
 
-            Si el campo es muy denso es posible calcular por octavos de anillo y tomar los parametros estadisticos del tercero con menor suma total.
+                    Si el campo es muy denso es posible calcular por octavos de anillo y tomar los parametros estadisticos del tercero con menor suma total.
 
-            Usage::
-              val=anillo(img,coo,cri,cre,full=True)
-
-
-            Parameters
-            ----------
-
-            img     : imagen donde esta el objeto. [array]
-
-            coo     : tuple con coordenadas Y y X del objeto. Ojo con el orden.  [int o float]
-
-            cri     : radio interno de la apertura. radi tiene que ser menor que cre. [float]
-
-            cre     : radio externo de la apertura. rade tiene que ser mayor que cri. [float]
-
-            full    : decide si toma todo el anillo (True) despreciando el 20% de los pixels con mayor valor o analiza en octavos y se queda con los valores correspondientes al tercero con menor suma total. El default es full=True. [bool]
-
-            Returns
-            -------
-
-            val    : vector con: numero de pixels utilizado para el calculo, numero total de ADUs, valor medio, mediana y desviacion standard. [float]
+                    Usage::
+                      val=anillo(img,coo,cri,cre,full=True)
 
 
-            Notes
-            -----
+                    Parameters
+                    ----------
 
-            rgh - Ago 2015
-            rgh - Abril 2016
-            rgh - Julio 2018: desprecia un porcentaje de los pixeles altos
-            rgh - Oct 2018: modifico calculo de pixels altos, agrego posibilidad de calcular en octavos y una estimacion de la moda
+                    img     : imagen donde esta el objeto. [array]
+
+                    coo     : tuple con coordenadas Y y X del objeto. Ojo con el orden.  [int o float]
+
+                    cri     : radio interno de la apertura. radi tiene que ser menor que cre. [float]
+
+                    cre     : radio externo de la apertura. rade tiene que ser mayor que cri. [float]
+
+                    full    : decide si toma todo el anillo (True) despreciando el 20% de los pixels con mayor valor o analiza en octavos y se queda con los valores correspondientes al tercero con menor suma total. El default es full=True. [bool]
+
+                    Returns
+                    -------
+
+                    val    : vector con: numero de pixels utilizado para el calculo, numero total de ADUs, valor medio, mediana y desviacion standard. [float]
+
+
+                    Notes
+                    -----
+
+                    rgh - Ago 2015
+                    rgh - Abril 2016
+                    rgh - Julio 2018: desprecia un porcentaje de los pixeles altos
+                    rgh - Oct 2018: modifico calculo de pixels altos, agrego posibilidad de calcular en octavos y una estimacion de la moda
     """
 
     # dimensiones de la imagen, lado del box de extraccion y control de
@@ -920,17 +917,17 @@ def anillo(img, coo, cri, cre, full=True):
 
 def txt_lists(path, arch):
     # Get object frames list
-    fp = glob.glob(path + arch +"_0??.fits")
+    fp = glob.glob(path + arch + "_???.fits")
     with open(path + arch + ".txt", "w") as f:
         for item in fp:
             f.write("%s\n" % item)
     # Get dark frames list
-    fp = glob.glob(path + "*dark" + "?"*(len(arch)+5) +"_0??.fits")
+    fp = glob.glob(path + "*dark" + "?" * (len(arch) + 5) + "_???.fits")
     with open(path + "dark.txt", "w") as f:
         for item in fp:
             f.write("%s\n" % item)
     # Get flat frames list
-    fp = glob.glob(path + "*flat" + "?"*(len(arch)+5) +"_0??.fits")
+    fp = glob.glob(path + "*flat" + "?" * (len(arch) + 5) + "_???.fits")
     with open(path + "flat.txt", "w") as f:
         for item in fp:
             f.write("%s\n" % item)
@@ -945,162 +942,168 @@ def txt_lists(path, arch):
 
 # Funciones de pol_Lab.py
 
-def polr(obs,sun,pol):
+
+def polr(obs, sun, pol):
     """
-    Funcion que permite calcular la polarizacion y el angulo de posicion referidos a la normal al plano de scattering (plano Sol-Objeto-Tierra).
+            Funcion que permite calcular la polarizacion y el angulo de posicion referidos a la normal al plano de scattering (plano Sol-Objeto-Tierra).
 
-    Usage::
-      pp,th=polr(obs,sun,pol)
-
-
-    Parameters
-    ----------
-
-    obs     : angulo de posicion observado respecto al punto cardinal norte en grados. [float]
-=
-    sun     : angulo de posicion del plano de scattering respecto al punto cardinal norte en grados. [float]
-
-    pol     : modulo del vector de polarizacion observado en %. [float]
+            Usage::
+              pp,th=polr(obs,sun,pol)
 
 
-    Returns
-    -------
+            Parameters
+            ----------
 
-    pp      : valor del vector de polarizacion reducido respecto a la normal al plano de scattering en %. [float]
+            obs     : angulo de posicion observado respecto al punto cardinal norte en grados. [float]
+    =
+            sun     : angulo de posicion del plano de scattering respecto al punto cardinal norte en grados. [float]
 
-    th      : angulo de posicion respecto a la normal al plano de scattering en grados. [float]
-    
+            pol     : modulo del vector de polarizacion observado en %. [float]
 
-    Notes
-    -----
 
-    rgh - Octubre 2018
+            Returns
+            -------
+
+            pp      : valor del vector de polarizacion reducido respecto a la normal al plano de scattering en %. [float]
+
+            th      : angulo de posicion respecto a la normal al plano de scattering en grados. [float]
+
+
+            Notes
+            -----
+
+            rgh - Octubre 2018
     """
-    #ojo: el valor resultante de th debería ser menor de 90...
-    th=obs-(sun-90.)
-    
-    pp=pol*np.cos(2.*th*np.pi/180.)
-    return pp,th
-    
-    
-#def getpol_tangra(arch,faseIn=10,paso=2.5):
-''' this function will allow to calculate the polarization-fase
+    # ojo: el valor resultante de th debería ser menor de 90...
+    th = obs - (sun - 90.0)
+
+    pp = pol * np.cos(2.0 * th * np.pi / 180.0)
+    return pp, th
+
+
+# def getpol_tangra(arch,faseIn=10,paso=2.5):
+""" this function will allow to calculate the polarization-fase
 curve from data reduced with Tangra from Laboratorio Avanzado
 we assume four angles taken in order 0, 45, 90 and 135
 arch-->dat archive: expected to be CSV as obtained from Tangra
 faseIn--> Angulo de fase en el cual se inicia la medicion
 paso--> paso en angulo de fase
 OUT--> grafica, archivo csv con la fase y Pr y arreglos de fase y Pr
-'''
+"""
 
 # Funciones de AjustePolFase1.py
 
-def modelFase(A,c1,c2,c3):
-   '''model to ajust Polarization fase curves in asteroids
-   A--> phase angle
-   c1--> paramater 1
-   c2--> parameter 2
-   c3--> parameter 3
-   OUT --> Pr(alpha), reduced Polarization'''
-   
-   Pr=c1*(np.exp(-(A/c2))-1)+c3*A
-   
-   return(Pr)
 
-def P_fit(alpha,magPr):
-   '''Fitting function for modelFase 
-   alpha-->observed phase
-   magVr--> observed Pr'''
-   X=(alpha,alpha)
-   model = Model(modelFase)
-   model.set_param_hint('c1', value=2.5,min=0,max=25)
-   model.set_param_hint('c2',value=5,min=0,max=35)
-   model.set_param_hint('c3',value=.1,min=0,max=3)
-   
-   params = model.make_params()
-   # Fitting
-   model_fit = model.fit(magPr, params,
-               A=X,verbose=True,max_nfev=10000)
+def modelFase(A, c1, c2, c3):
+    """model to ajust Polarization fase curves in asteroids
+    A--> phase angle
+    c1--> paramater 1
+    c2--> parameter 2
+    c3--> parameter 3
+    OUT --> Pr(alpha), reduced Polarization"""
 
-   return model_fit
+    Pr = c1 * (np.exp(-(A / c2)) - 1) + c3 * A
+
+    return Pr
 
 
-#-----------------------------------------------------
+def P_fit(alpha, magPr):
+    """Fitting function for modelFase
+    alpha-->observed phase
+    magVr--> observed Pr"""
+    X = (alpha, alpha)
+    model = Model(modelFase)
+    model.set_param_hint("c1", value=2.5, min=0, max=25)
+    model.set_param_hint("c2", value=5, min=0, max=35)
+    model.set_param_hint("c3", value=0.1, min=0, max=3)
+
+    params = model.make_params()
+    # Fitting
+    model_fit = model.fit(magPr, params, A=X, verbose=True, max_nfev=10000)
+
+    return model_fit
+
+
+# -----------------------------------------------------
+
 
 def MAD(im):
-    '''Returns the Median and Median Absolute Deviation of an array.'''
-    
+    """Returns the Median and Median Absolute Deviation of an array."""
+
     m = np.median(im)
     dif = np.abs(im - m)
     s = np.median(dif)
 
-    return(m, s)
+    return (m, s)
 
-#-----------------------------------------------------
+
+# -----------------------------------------------------
+
 
 def robomad(im, thresh=3):
-    '''Assumes that the array im has normally distributed background pixels
+    """Assumes that the array im has normally distributed background pixels
     and some sources, like stars bad pixels and cosmic rays. Thresh = no. of sigma
-    for rejection (e.g., 5).'''
-    
-    #STEP 1: Start by getting the median and MAD as robust proxies for the mean and sd.
-    m,s = MAD(im)
+    for rejection (e.g., 5)."""
+
+    # STEP 1: Start by getting the median and MAD as robust proxies for the mean and sd.
+    m, s = MAD(im)
     sd = 1.4826 * s
-    
-    if (sd < 1.0e-14):
-        return(m,sd)
+
+    if sd < 1.0e-14:
+        return (m, sd)
     else:
-    
-        #STEP 2: Identify outliers, recompute mean and std with pixels that remain.
-        gdPix = np.where(abs(im - m) < (thresh*sd))
+
+        # STEP 2: Identify outliers, recompute mean and std with pixels that remain.
+        gdPix = np.where(abs(im - m) < (thresh * sd))
         m1 = np.mean(im[gdPix])
         sd1 = np.std(im[gdPix])
-        
-        #STEP 3: Repeat step 2 with new mean and sdev values.
-        gdPix = np.where(abs(im - m1) < (thresh*sd1))
+
+        # STEP 3: Repeat step 2 with new mean and sdev values.
+        gdPix = np.where(abs(im - m1) < (thresh * sd1))
         m2 = np.mean(im[gdPix])
         sd2 = np.std(im[gdPix])
-        
-        return(m2, sd2)
-    
-#-----------------------------------------------------
 
-def reducir(flats,bias,objetos):
+        return (m2, sd2)
+
+
+# -----------------------------------------------------
+
+
+def reducir(flats, bias, objetos):
     """
-    ## La funcion reducir utiliza la misma rutina que estaba en el programa redbasica de RGH 
+    ## La funcion reducir utiliza la misma rutina que estaba en el programa redbasica de RGH
     -- una vez ejecutado %run redbasica la forma de uso es:
     :  reducir(lflats,lbias,lobjs)... donde los argumentos
     son listas generadas con glob.glob
     --> COmo resultado guardará los archivos procesados en el directorio de trabajo
-    Con el nombre original en OBJETOS.dat,  se espera que la lista de archivos tenga 
+    Con el nombre original en OBJETOS.dat,  se espera que la lista de archivos tenga
     el sig formato: ../../../15_Eunomia_B_0008o.fits
     """
     # armo lista de todas las imagenes a procesar
 
-    #lista=glob.glob("*.fits")
-    #if(len(lista)==0):
+    # lista=glob.glob("*.fits")
+    # if(len(lista)==0):
     #  lista=glob.glob("*.FIT")
 
     # armo listas para bias, flats y objetos
-    #archf=open(flats,'r')
-    #archb=open(bias,'r')
-    #archo=open(objetos,'r')	
-    
-    listb=bias#archb.readlines()
-    lf=flats#archf.readlines()
-    listo=objetos#archo.readlines()
-    listf=[]
-    #Extraer solo los flats en 0 y 90 grados
+    # archf=open(flats,'r')
+    # archb=open(bias,'r')
+    # archo=open(objetos,'r')
+
+    listb = bias  # archb.readlines()
+    lf = flats  # archf.readlines()
+    listo = objetos  # archo.readlines()
+    listf = []
+    # Extraer solo los flats en 0 y 90 grados
     for ii in lf:
-        
-        if ft.getval(ii[:],'pol')==0:
+
+        if ft.getval(ii[:], "pol") == 0:
             listf.append(ii)
         #
-        elif ft.getval(ii[:],'pol')==180:
+        elif ft.getval(ii[:], "pol") == 180:
             listf.append(ii)
- 
 
-    #for ii in lista:
+    # for ii in lista:
     #   if ft.getval(ii,'imagetyp')=='zero':
     #       listb.append(ii)
     #    elif ft.getval(ii,'imagetyp')=='flat':
@@ -1108,158 +1111,230 @@ def reducir(flats,bias,objetos):
     #    else:
     #        listo.append(ii)
 
-    flg=(len(listb) != 0)
-    assert flg,"No hay imagenes de Darks"
-    flg=(len(listf) != 0)
-    assert flg,"No hay imagenes de FLAT"
+    flg = len(listb) != 0
+    assert flg, "No hay imagenes de Darks"
+    flg = len(listf) != 0
+    assert flg, "No hay imagenes de FLAT"
 
-    print('Listas procesadas')
+    print("Listas procesadas")
 
     # arma un cubo con los bias
     #
-    cubo=np.zeros((ft.getval(listb[0][:],'naxis2'),ft.getval(listb[0][:],'naxis1'),len(listb)),dtype=float)
+    cubo = np.zeros(
+        (
+            ft.getval(listb[0][:], "naxis2"),
+            ft.getval(listb[0][:], "naxis1"),
+            len(listb),
+        ),
+        dtype=float,
+    )
     for ii in range(len(listb)):
-        img,hdr=leefits(listb[ii][:],uint=True)
-        cubo[:,:,ii]=img
-    
+        img, hdr = leefits(listb[ii][:], uint=True)
+        cubo[:, :, ii] = img
+
     # ordena pixel a pixel de menor a mayor
     #
-    cubo1=np.sort(cubo,axis=2)
+    cubo1 = np.sort(cubo, axis=2)
 
-    # calcula el valor medio despreciando el valor mas alto 
+    # calcula el valor medio despreciando el valor mas alto
     #
-    bias=np.mean(cubo1[:,:,:len(listb)-1],axis=2)
-    hdr.add_comment('Combinacion de {:d} BIAS con Python'.format(len(listb)))
-    ft.writeto('master_bias.fit',bias,header=hdr,overwrite=True)
-    print('BIAS listo')
-    
+    bias = np.mean(cubo1[:, :, : len(listb) - 1], axis=2)
+    hdr.add_comment("Combinacion de {:d} BIAS con Python".format(len(listb)))
+    ft.writeto("master_bias.fit", bias, header=hdr, overwrite=True)
+    print("BIAS listo")
+
     # arma un cubo con los flats
     #
-    cubo=np.zeros((ft.getval(listf[0][:],'naxis2'),ft.getval(listf[0][:],'naxis1'),len(listf)),dtype=float)
+    cubo = np.zeros(
+        (
+            ft.getval(listf[0][:], "naxis2"),
+            ft.getval(listf[0][:], "naxis1"),
+            len(listf),
+        ),
+        dtype=float,
+    )
     # nchar es el num de caracteres previos al nombre en las listas de archivos
-    nchar=0	
+    nchar = 0
     for ii in range(len(listf)):
-        img,hdr=leefits(listf[ii][:],uint=True)
-    
+        img, hdr = leefits(listf[ii][:], uint=True)
+
         # corrige flats por bias
         #
-        img=img-bias
-        cubo[:,:,ii]=img
-        hdr.add_comment('Corregido por BIAS con Python')
-    
-        #ft.writeto(listf[ii][nchar:-2],img,header=hdr,overwrite=True) #OJO CANCELADO PARA EVITAR DEMASIADOS ARCHIVOS
-       
-    print('Correccion de FLATS por BIAS. OK')
- 
-    # ordena pixel a pixel de menor a mayor
-    #   
-    cubo1=np.sort(cubo,axis=2)
+        img = img - bias
+        cubo[:, :, ii] = img
+        hdr.add_comment("Corregido por BIAS con Python")
 
-    # calcula el valor medio despreciando el valor mas alto 
+        # ft.writeto(listf[ii][nchar:-2],img,header=hdr,overwrite=True) #OJO CANCELADO PARA EVITAR DEMASIADOS ARCHIVOS
+
+    print("Correccion de FLATS por BIAS. OK")
+
+    # ordena pixel a pixel de menor a mayor
     #
-    flat=np.mean(cubo1[:,:,:len(listf)-1],axis=2)
-    dim=np.shape(flat)
-    
+    cubo1 = np.sort(cubo, axis=2)
+
+    # calcula el valor medio despreciando el valor mas alto
+    #
+    flat = np.mean(cubo1[:, :, : len(listf) - 1], axis=2)
+    dim = np.shape(flat)
+
     # calcula un valor medio para el flat resultante
     # considerando solo la zona central
     #
-    fm=np.mean(flat[dim[0]//2-100:dim[0]//2+100,dim[1]//2-100:dim[1]//2+100])
-    hdr.add_comment('Combinacion de {:d} FLATS con Python'.format(len(listf)))
-    hdr.add_comment('Valor medio del FLAT: {:.2f}'.format(fm))
-    ft.writeto('master_flat.fit',flat,header=hdr,overwrite=True)
-    print('FLAT listo')
+    fm = np.mean(
+        flat[
+            dim[0] // 2 - 100 : dim[0] // 2 + 100, dim[1] // 2 - 100 : dim[1] // 2 + 100
+        ]
+    )
+    hdr.add_comment("Combinacion de {:d} FLATS con Python".format(len(listf)))
+    hdr.add_comment("Valor medio del FLAT: {:.2f}".format(fm))
+    ft.writeto("master_flat.fit", flat, header=hdr, overwrite=True)
+    print("FLAT listo")
 
     # renormaliza el flat con el valor medio
     #
-    flatv=flat/fm
-    
+    flatv = flat / fm
+
     # detecta valores igual a cero para evitar NaNs
     #
-    inx=np.where(flatv == 0.)
-    if(len(inx) != 0):
-        flatv[inx]=0.1
-    
-    # procesa imagenes de objetos
-    print("entra for listo")	
-    for ii in range(len(listo)):
-        #print(listo[ii])
-        img,hdr=leefits(listo[ii],uint=True);#print(ii)
-    
-    # corrige por bias y flat
-    #
-        img=(img-bias)/flatv
-        hdr.add_comment('Corregido por DARKS con Python')
-        hdr.add_comment('Corregido por FLAT con Python')
-        hdr.add_comment('Valor medio del FLAT: {:.2f}'.format(fm))
-        #Escribe archivos con extension FIT no FITS
-        ft.writeto(listo[ii][nchar:-1],img,header=hdr,overwrite=True)
-            
-    print('Correccion de OBJETOS por FLAT y BIAS. OK')
-    return listo[0][0:5],hdr['OBJECT']
-#----------------------------------------------------------------------
-############################################################
-####################### Main*************************************************
-#########################################################
-clear()
+    inx = np.where(flatv == 0.0)
+    if len(inx) != 0:
+        flatv[inx] = 0.1
 
-print("\nObjetos observados:\n")
-#para Windows
-print(colored.yellow(subprocess.check_output(["dir","datos\\"]).decode()))  # Cambiar
-#para linux
-#kk=glob.glob("datos/*")
-#print(kk)
-#print(colored.yellow(subprocess.check_output(["termit","ls datos\\"]).decode()))  # Cambiar
+    # procesa imagenes de objetos
+    print("entra for listo")
+    for ii in range(len(listo)):
+        # print(listo[ii])
+        img, hdr = leefits(listo[ii], uint=True)
+        # print(ii)
+
+        # corrige por bias y flat
+        #
+        img = (img - bias) / flatv
+        hdr.add_comment("Corregido por DARKS con Python")
+        hdr.add_comment("Corregido por FLAT con Python")
+        hdr.add_comment("Valor medio del FLAT: {:.2f}".format(fm))
+        # Escribe archivos con extension FIT no FITS
+        ft.writeto(listo[ii][nchar:-1], img, header=hdr, overwrite=True)
+
+    print("Correccion de OBJETOS por FLAT y BIAS. OK")
+    return listo[0][0:5], hdr["OBJECT"]
+
+
+def question(message):
+    i = 0
+    while i < 2:
+        answer = input(message)
+        if any(answer.lower() == f for f in ["1"]):
+            return "1"
+            break
+        elif any(answer.lower() == f for f in ["2"]):
+            return "2"
+            break
+        else:
+            i += 1
+            if i < 2:
+                print("Please enter select your OS")
+            else:
+                print("Nothing done")
+                quit()
+
+
+# ----------------------------------------------------------------------
+# ******************************** Main ********************************
+# ----------------------------------------------------------------------
+
+OS = question(
+    "\nDesde qué Sistema Operativo ejecutas este programa? (1) Windows (2) Linux/MacOs : "
+)
+if OS == "1":
+    clear = lambda: os.system("cls")
+    clear()
+    print("\nObjetos observados:\n")
+    print(
+        colored.yellow(subprocess.check_output(["dir", "datos\\"]).decode())
+    )  # Cambiar
+    print(
+        colored.yellow(
+            subprocess.check_output(["powershell.exe", "dir datos\\"]).decode()
+        )
+    )  # Cambiar
+else:
+    clear = lambda: os.system("clear")
+    clear()
+    print("\nObjetos observados:\n")
+    print(
+        colored.yellow(
+            ", ".join(
+                [
+                    f.name
+                    for f in os.scandir(os.getcwd().format() + "/datos")
+                    if f.is_dir()
+                ]  # MacOs
+            )
+        )
+        + "\n"
+    )
+    # Linux (borrar esto luego de validar el codigo en linux)
+    # kk = glob.glob("datos/*", recursive=True)
+    # print(kk)
 
 arch = input("Ingresa el nombre de un objeto: ")
 
 cwd = os.getcwd().format()  # Get the current working directory
-path = cwd + "/datos/" + arch + "/" # Object data directory linux
+path = cwd + "/datos/" + arch + "/"  # Object data directory linux
 
-##############################################################
-#Limpiar imagenes de variaciones aleatorias en lectura CMOS
-##############################################################
-lst=glob.glob(path+'*_s.fits')
-if len(lst)<1: #Si no hay archivos Scrubbed
+############################################################
+# Limpiar imagenes de variaciones aleatorias en lectura CMOS
+############################################################
+
+lst = glob.glob(path + "*_s.fits")
+if len(lst) < 1:  # Si no hay archivos Scrubbed
     print("Limpiando imagenes por ruido CMOS...")
-    rawlist=glob.glob(path+'*.fits')
+    rawlist = glob.glob(path + "*.fits")
 
-    for frame in rawlist: #nf subtract out row wise medians in each frame and save in new directory "save path"
-        d,h = leefits(frame)
-        xS = h['NAXIS1']
-        yS = h['NAXIS2']
-        #Restar DARKS Al parecer no sirve de nada, el ruido aleatorio varía mucho
-        #d=d-MDark
-        rowmeds = np.median(d, axis = 1)
-        d_scrubbed = d - np.outer(rowmeds,np.ones((xS)))
-        
-        mn, std = robomad(d_scrubbed) #get MAD
-        
-        d_scrubbed_bkg = np.float32(d_scrubbed - mn) #remove MAD from BKG
-        
-        #d_scrubbed_bkg[:10,:] = mn # replace hot pixels at top with MAD
-            
-        ft.writeto(frame[:-5]+ '_s' + '.fits', d_scrubbed_bkg, header = h, overwrite=True) #save scrubbed image
+    for (
+        frame
+    ) in (
+        rawlist
+    ):  # nf subtract out row wise medians in each frame and save in new directory "save path"
+        d, h = leefits(frame)
+        xS = h["NAXIS1"]
+        yS = h["NAXIS2"]
+        # Restar DARKS Al parecer no sirve de nada, el ruido aleatorio varía mucho
+        # d=d-MDark
+        rowmeds = np.median(d, axis=1)
+        d_scrubbed = d - np.outer(rowmeds, np.ones((xS)))
+
+        mn, std = robomad(d_scrubbed)  # get MAD
+
+        d_scrubbed_bkg = np.float32(d_scrubbed - mn)  # remove MAD from BKG
+
+        # d_scrubbed_bkg[:10,:] = mn # replace hot pixels at top with MAD
+
+        ft.writeto(
+            frame[:-5] + "_s" + ".fits", d_scrubbed_bkg, header=h, overwrite=True
+        )  # save scrubbed image
 else:
     print("Brincando proceso de limpiado por ruido CMOS...")
 
 ################################################################
-#################Procesar por por DARKS y FLATS#################
-#################################################################
+################ Procesar por por DARKS y FLATS ################
+################################################################
 
-objlst=glob.glob(path+arch+'*_s.fits')
-fltlst=glob.glob(path+'flat*_s.fits')
-drklst=glob.glob(path+'dark*_s.fits')
-lst=glob.glob(path+'*_s.fit')
-if len(lst)<1: #Si no hay archivos Corregidos
-   print("Corrigiendo imagenes por DARKS y Flats...")
-   _,_=reducir(fltlst,drklst,objlst)
+objlst = glob.glob(path + arch + "*_s.fits")
+fltlst = glob.glob(path + "flat*_s.fits")
+drklst = glob.glob(path + "dark*_s.fits")
+lst = glob.glob(path + "*_s.fit")
+if len(lst) < 1:  # Si no hay archivos Corregidos
+    print("Corrigiendo imagenes por DARKS y Flats...")
+    _, _ = reducir(fltlst, drklst, objlst)
 else:
-   print("Brincando coprreccion de DARKS y FLATS")
-objlst=glob.glob(path+arch+'*_0??.fits')#Usar datos no corregidos
-fltlst=glob.glob(path+'flat*_0??.fits')
-drklst=glob.glob(path+'dark*_0??.fits')
-#Comienza reduccion de David
-txt_lists(path, arch) #Cambiar esta funcion para agregar correcciones 
+    print("Brincando coprreccion de DARKS y FLATS")
+objlst = glob.glob(path + arch + "*_???.fits")
+fltlst = glob.glob(path + "flat*_???.fits")
+drklst = glob.glob(path + "dark*_???.fits")
+# Comienza reduccion de David
+txt_lists(path, arch)  # Cambiar esta funcion para agregar correcciones
 
 obj = []
 print("Ojo: Trabajando con objetos no corregidos...")
@@ -1278,30 +1353,30 @@ ri = 26  # Radio interno anillo de cielo
 re = 28  # Radio externo del anillo de cielo
 
 
-#Fotometeria de baja
+# Fotometeria de baja
 n = 1  # numero de objetos
 k = 1  # contador de imagenes
 Flux = []
 Imnum = []
 
-lowlst=glob.glob(path+'low*_0??.fits')
+lowlst = glob.glob(path + "low*_???.fits")
 lowlst.sort()
-ba=0
-Lows=[]
+ba = 0
+Lows = []
 for kk in lowlst:
-    _,hd=leefits(kk)
-    if hd['pol']==0 and ba==0:
+    _, hd = leefits(kk)
+    if hd["pol"] == 0 and ba == 0:
         Lows.append(kk)
-        ba=ba+1
-    if hd['pol']==45 and ba==1:
+        ba = ba + 1
+    if hd["pol"] == 45 and ba == 1:
         Lows.append(kk)
-        ba=ba+1
-    if hd['pol']==90 and ba==2:
+        ba = ba + 1
+    if hd["pol"] == 90 and ba == 2:
         Lows.append(kk)
-        ba=ba+1
-    if hd['pol']==135 and ba==3:
+        ba = ba + 1
+    if hd["pol"] == 135 and ba == 3:
         Lows.append(kk)
-        ba=ba+1
+        ba = ba + 1
 for item in Lows:
     if k == 1:  # Solo abrir imagen la primera vez
         print("\n" + item + "\n")
@@ -1357,32 +1432,33 @@ print(
     colored.yellow("Grabando Datos: {:}".format(path + "lowFotom_" + arch + ".csv\n"))
 )
 np.savetxt(
-    path + "lowFotom_" + arch + ".csv", np.array([imagen, flujo]).T, delimiter=",")   
+    path + "lowFotom_" + arch + ".csv", np.array([imagen, flujo]).T, delimiter=","
+)
 
-#Fotometria de alta
+# Fotometria de alta
 n = 1  # numero de objetos
 k = 1  # contador de imagenes
 Flux = []
 Imnum = []
 
-higlst=glob.glob(path+'hig*_0??.fits')
+higlst = glob.glob(path + "hig*_???.fits")
 higlst.sort()
-ba=0
-Highs=[]
+ba = 0
+Highs = []
 for kk in higlst:
-    _,hd=leefits(kk)
-    if hd['pol']==0 and ba==0:
+    _, hd = leefits(kk)
+    if hd["pol"] == 0 and ba == 0:
         Highs.append(kk)
-        ba=ba+1
-    if hd['pol']==45 and ba==1:
+        ba = ba + 1
+    if hd["pol"] == 45 and ba == 1:
         Highs.append(kk)
-        ba=ba+1
-    if hd['pol']==90 and ba==2:
+        ba = ba + 1
+    if hd["pol"] == 90 and ba == 2:
         Highs.append(kk)
-        ba=ba+1
-    if hd['pol']==135 and ba==3:
+        ba = ba + 1
+    if hd["pol"] == 135 and ba == 3:
         Highs.append(kk)
-        ba=ba+1
+        ba = ba + 1
 for item in Highs:
     if k == 1:  # Solo abrir imagen la primera vez
         print("\n" + item + "\n")
@@ -1438,14 +1514,15 @@ print(
     colored.yellow("Grabando Datos: {:}".format(path + "higFotom_" + arch + ".csv\n"))
 )
 np.savetxt(
-    path + "higFotom_" + arch + ".csv", np.array([imagen, flujo]).T, delimiter=",")  
+    path + "higFotom_" + arch + ".csv", np.array([imagen, flujo]).T, delimiter=","
+)
 
-#Fotometria de objetos
+# Fotometria de objetos
 n = 1  # numero de objetos
 k = 1  # contador de imagenes
 Flux = []
 Imnum = []
-obj.sort() #ordenar lista...
+obj.sort()  # ordenar lista...
 for item in obj:
     if k == 1:  # Solo abrir imagen la primera vez
         print("\n" + item + "\n")
@@ -1503,112 +1580,129 @@ plt.plot(imagen, flujo, ".-")
 plt.xlabel("Numero de imagen")
 plt.ylabel("Flujo")
 plt.show()
-print(
-    colored.yellow("Grabando Datos: {:}".format(path + "Fotom_" + arch + ".csv\n"))
-)
-np.savetxt(
-    path + "Fotom_" + arch + ".csv", np.array([imagen, flujo]).T, delimiter=","
-)
+print(colored.yellow("Grabando Datos: {:}".format(path + "Fotom_" + arch + ".csv\n")))
+np.savetxt(path + "Fotom_" + arch + ".csv", np.array([imagen, flujo]).T, delimiter=",")
 
 ####################
 # pol_Lab.py
 ######################
-arch1="Fotom_" + arch + ".csv"
-datL=np.loadtxt(path+'low'+arch1,delimiter=',') #datos en formato numpy
-datH=np.loadtxt(path+'hig'+arch1,delimiter=',') #datos en formato numpy
-l0=datL[0,1];l45=datL[1,1];l90=datL[2,1];l135=datL[3,1]
-h0=datH[0,1];h45=datH[1,1];h90=datH[2,1];h135=datH[3,1]
-#Pol Baja
-ql=((l0-l90)/(l0+l90))
-ul=((l45-l135)/(l45+l135))
-Pl=np.sqrt(ql**2+ul**2) #porcentaje de pol
-Al=((np.arctan2(ul,ql))*180/np.pi)/2 #angulo entre 0 y 180
-#Pol Alta
-qh=((h0-h90)/(h0+h90));qh=qh-ql#restando lo instrumental
-uh=((h45-h135)/(h45+h135));uh=uh-ul
-Ph=np.sqrt(qh**2+uh**2) #porcentaje de pol
-Ah=((np.arctan2(uh,qh))*180/np.pi)/2 #angulo entre 0 y 180
-#ojo hay que calcular el offset, se supone que el eje de transmision es 90 
-offA=90-Ah
+arch1 = "Fotom_" + arch + ".csv"
+datL = np.loadtxt(path + "low" + arch1, delimiter=",")  # datos en formato numpy
+datH = np.loadtxt(path + "hig" + arch1, delimiter=",")  # datos en formato numpy
+l0 = datL[0, 1]
+l45 = datL[1, 1]
+l90 = datL[2, 1]
+l135 = datL[3, 1]
+h0 = datH[0, 1]
+h45 = datH[1, 1]
+h90 = datH[2, 1]
+h135 = datH[3, 1]
+# Pol Baja
+ql = (l0 - l90) / (l0 + l90)
+ul = (l45 - l135) / (l45 + l135)
+Pl = np.sqrt(ql**2 + ul**2)  # porcentaje de pol
+Al = ((np.arctan2(ul, ql)) * 180 / np.pi) / 2  # angulo entre 0 y 180
+# Pol Alta
+qh = (h0 - h90) / (h0 + h90)
+qh = qh - ql  # restando lo instrumental
+uh = (h45 - h135) / (h45 + h135)
+uh = uh - ul
+Ph = np.sqrt(qh**2 + uh**2)  # porcentaje de pol
+Ah = ((np.arctan2(uh, qh)) * 180 / np.pi) / 2  # angulo entre 0 y 180
+# ojo hay que calcular el offset, se supone que el eje de transmision es 90
+offA = 90 - Ah
 
-faseIn=input("Angulo de fase inicial: ")
-faseIn=float(faseIn)
-paso=input("Paso en angulo de fase: ")
-paso=float(paso)
-dat1=np.loadtxt(path+arch1,delimiter=',') #datos en formato numpy
-dat=dat1[:,1]
-PolR=[]
+faseIn = input("Angulo de fase inicial: ")
+faseIn = float(faseIn)
+paso = input("Paso en angulo de fase: ")
+paso = float(paso)
+dat1 = np.loadtxt(path + arch1, delimiter=",")  # datos en formato numpy
+dat = dat1[:, 1]
+PolR = []
 
 
-ln=len(dat)  
-k=0
-while k<ln:
-    x0=dat[k];k=k+1
-    x45=dat[k];k=k+1
-    x90=dat[k];k=k+1
-    x135=dat[k];k=k+1 # Por qué me marca error en esta linea?*****************************************
-    q=((x0-x90)/(x0+x90))-ql#Restando lo instrumental
-    u=((x45-x135)/(x45+x135))-ul
-    P=np.sqrt(q**2+u**2) #porcentaje de pol
-    A=((np.arctan2(u,q))*180/np.pi)/2 + offA #angulo entre 0 y 180
-    if A < 0: A=A+180. #NO SE REQUIERE AL CALCULAR LA BAJA
-    if A >= 180: A=A-180.
-    
-    #Calcular Pr y Th 
-    su=0
-    Pr,Th=polr(A,su,P)
+ln = len(dat)
+k = 0
+while k < ln:
+    x0 = dat[k]
+    k = k + 1
+    x45 = dat[k]
+    k = k + 1
+    x90 = dat[k]
+    k = k + 1
+    x135 = dat[k]
+    k = k + 1
+    q = ((x0 - x90) / (x0 + x90)) - ql  # Restando lo instrumental
+    u = ((x45 - x135) / (x45 + x135)) - ul
+    P = np.sqrt(q**2 + u**2)  # porcentaje de pol
+    A = ((np.arctan2(u, q)) * 180 / np.pi) / 2 + offA  # angulo entre 0 y 180
+    if A < 0:
+        A = A + 180.0  # NO SE REQUIERE AL CALCULAR LA BAJA
+    if A >= 180:
+        A = A - 180.0
+
+    # Calcular Pr y Th
+    su = 0
+    Pr, Th = polr(A, su, P)
     PolR.append(Pr)
 
-pr=np.array(PolR)*100 #porcentaje
-fas=np.arange(faseIn,len(pr)*paso+faseIn,paso)
-np.savetxt(path+'PolFase_'+arch,np.array([fas,pr]).T,delimiter=',')
-print("Guardando archivo: "+path+'PolFase_'+arch)
-print(np.array([fas,pr]).T)
-plt.figure();plt.clf()
-plt.plot(fas,pr,'.-')
-plt.xlabel(r'Phase Angle [$\alpha$]');plt.ylabel(r'Pr($\alpha$) [%]' )
-plt.title('PolFase  '+arch)
+pr = np.array(PolR) * 100  # porcentaje
+fas = np.arange(faseIn, len(pr) * paso + faseIn, paso)
+np.savetxt(path + "PolFase_" + arch, np.array([fas, pr]).T, delimiter=",")
+print("Guardando archivo: " + path + "PolFase_" + arch)
+print(np.array([fas, pr]).T)
+plt.figure()
+plt.clf()
+plt.plot(fas, pr, ".-")
+plt.xlabel(r"Phase Angle [$\alpha$]")
+plt.ylabel(r"Pr($\alpha$) [%]")
+plt.title("PolFase  " + arch)
 plt.show()
 
-#return fas,pr
+# return fas,pr
 
 
 # AjustePolFase1.py
 
-#Cargar datos 
-#arch='a21900.txt'
-#lista=glob.glob('PolFase_try2.csv')
-arch='PolFase_'+arch
-plt.figure();plt.clf()
-#co=0
-#color = iter(plt.cm.Paired(np.linspace(0, 1, len(lista)+1)))
+# Cargar datos
+# arch='a21900.txt'
+# lista=glob.glob('PolFase_try2.csv')
+arch = "PolFase_" + arch
+plt.figure()
+plt.clf()
+# co=0
+# color = iter(plt.cm.Paired(np.linspace(0, 1, len(lista)+1)))
 
-dato=np.loadtxt(path+arch,delimiter=',')
-k0=dato[dato[:,0].argsort()] 
-al=k0[:,0];va=k0[:,1]
-funF=interp1d(al,va,kind='linear')
-al0=np.arange(al[0],al[-1],.1)
-Mag0=funF(al0)
-LC_fit=P_fit(al0,Mag0)
-al1=np.arange(0,80,.1)
-Fit=LC_fit.eval(X=(al,al0))
-#print parameters
-print(arch+':');print(LC_fit.params);print(':\n')
-c1= LC_fit.params['c1'].value
-c2= LC_fit.params['c2'].value
-c3= LC_fit.params['c3'].value
-mod=modelFase(al1,c1,c2,c3)
-#co=next(color)
-plt.plot(al1,mod,'--',label='Model')
-plt.plot(al,va,'*',label=arch)
-plt.plot(al0,Mag0,'-.',label='interp')
-#plt.ylim(-6,5)
-#plt.xlim(0,70)
-#plt.plot(Y/v,F0,'-k',label='Synthetic_optimize')
-plt.xlabel(r'Phase Angle [$\alpha$]');plt.ylabel(r'Pr($\alpha$)' )
+dato = np.loadtxt(path + arch, delimiter=",")
+k0 = dato[dato[:, 0].argsort()]
+al = k0[:, 0]
+va = k0[:, 1]
+funF = interp1d(al, va, kind="linear")
+al0 = np.arange(al[0], al[-1], 0.1)
+Mag0 = funF(al0)
+LC_fit = P_fit(al0, Mag0)
+al1 = np.arange(0, 80, 0.1)
+Fit = LC_fit.eval(X=(al, al0))
+# print parameters
+print(arch + ":")
+print(LC_fit.params)
+print(":\n")
+c1 = LC_fit.params["c1"].value
+c2 = LC_fit.params["c2"].value
+c3 = LC_fit.params["c3"].value
+mod = modelFase(al1, c1, c2, c3)
+# co=next(color)
+plt.plot(al1, mod, "--", label="Model")
+plt.plot(al, va, "*", label=arch)
+plt.plot(al0, Mag0, "-.", label="interp")
+# plt.ylim(-6,5)
+# plt.xlim(0,70)
+# plt.plot(Y/v,F0,'-k',label='Synthetic_optimize')
+plt.xlabel(r"Phase Angle [$\alpha$]")
+plt.ylabel(r"Pr($\alpha$)")
 plt.legend()
 
-#invertir ejes
-#ax = plt.gca()
-#ax.set_ylim(ax.get_ylim()[::-1])
+# invertir ejes
+# ax = plt.gca()
+# ax.set_ylim(ax.get_ylim()[::-1])
 plt.show()
