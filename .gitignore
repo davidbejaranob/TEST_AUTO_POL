@@ -4,6 +4,7 @@
 *.pyo
 *.txt
 *.csv
+*.DS_Store
 .vscode/
 datos/
 __pycache__/

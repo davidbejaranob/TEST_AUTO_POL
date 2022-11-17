@@ -618,7 +618,7 @@ for k in range(int((gno_tot - gno_ini) / gno_paso) + 1):  # Mover Goniometro
 plt.close()
 
 input(
-    colored.green(string)(
+    colored.green(
         "Retirar el objeto que se encuentra delante de la cámara, presione enter cuando esté listo: "
     )
 )
