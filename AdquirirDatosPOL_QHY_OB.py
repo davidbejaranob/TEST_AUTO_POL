@@ -385,7 +385,7 @@ def rebin(arr, new_shape):
 
 
 ###################################################################
-def corte_xy(img, x, y, boxG=250, bi=(2, 2)):
+def corte_xy(img, x, y, boxG=300, bi=(2, 2)):
     """Funcion para recortar y salvar imagen procesada
     img-->corregida por flat y bias ya es NUMPY array
     boxG--> tam de la caja a guardar
@@ -497,7 +497,7 @@ def gno_pos_180(message, image_type, image_count, exp_time):
             time.sleep(0.05)
             kk = kk + 1
     plt.close()
-    z = "$J=G91G21Z-" + str((pol_tot - 1) / mpol) + "F200"
+    z = "$J=G91G21Z-" + str((pol_tot) / mpol) + "F200"
     serial.run(z)  # para regresar a 0 ojo el -1 es por backlash
     time.sleep(sle_time)
     input(colored.red("Retire el objeto que se encuentra delante de la cámara: "))
@@ -520,7 +520,7 @@ else:
     COM_NUMBER = "COM3"
 serial = init_openbuilds(COM_NUMBER)
 h = create_header()
-gan = 1
+gan = 350
 et = 0.5
 h["GAIN"] = gan
 h["EXP-TIME"] = et
@@ -557,7 +557,7 @@ darks_num = 5
 et_flats = 0.5
 et_high = 0.5  # Valor arbitrario, cambiar de ser necesario
 et_low = 0.5  # Valor arbitrario, cambiar de ser necesario
-mpol = 4.97  # grados por mm
+mpol = 5.270  # grados por mm
 pol_tot = 135
 input("Asegurese de que retirar la tapa de la cámara: ")
 img = get_cam_array(cam, et=et, gan=gan)
@@ -611,7 +611,7 @@ for k in range(int((gno_tot - gno_ini) / gno_paso) + 1):  # Mover Goniometro
         time.sleep(0.05)
         kk = kk + 1
 
-    z = "$J=G91G21Z-" + str((pol_tot - 1) / mpol) + "F200"
+    z = "$J=G91G21Z-" + str((pol_tot) / mpol) + "F200"
     serial.run(z)  # para regresar a 0 ojo el -1 es por backlash
     time.sleep(sle_time)
 plt.close()

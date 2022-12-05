@@ -1250,7 +1250,7 @@ if OS == "1":
     clear = lambda: os.system("cls")
     clear()
     print("\nObjetos observados:\n")
-    print(colored.yellow(subprocess.check_output(["dir", "datos\\"]).decode()))
+    print(colored.yellow(subprocess.check_output(["powershell.exe","dir datos\\"]).decode()))
 else:
     clear = lambda: os.system("clear")
     clear()
@@ -1340,7 +1340,7 @@ with open(path + arch + ".txt", "r") as f:
 # n=int(input('Numero de objetos a seleccionar (siendo el primer seleccionado el objeto de interés): \n'))
 n = 1  # numero de objetos
 k = 1  # contador de imagenes
-box = 30  # caja para buscar centroide
+box = 40  # caja para buscar centroide
 rr = (5, 10, 15, 20, 25)  # Aperturas para fotometria
 ri = 26  # Radio interno anillo de cielo
 re = 28  # Radio externo del anillo de cielo
